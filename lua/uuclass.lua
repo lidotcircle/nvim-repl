@@ -42,7 +42,14 @@ local function construct(obj, constructor)
     setmetatable(obj, {__index = __index})
 end
 
+---@class Class
+---@field new Constructor
+---@field construct ConstructFunc
+---@alias Constructor function(...: any[]): Object
+---@alias ConstructFunc function(object: table): void
 
+---@type Class
+---@class Object
 local Object = {}
 M.Object = Object
 Object[key_proto] = { Object }
@@ -55,7 +62,7 @@ function Object.new()
     return obj
 end
 
-
+---@return Class
 function M.Extend(...)
     local ans = {}
     function ans:getClass() return ans end
@@ -90,6 +97,9 @@ function M.Extend(...)
     return ans
 end
 
+---@return boolean
+---@param object Object
+---@param base Class
 function M.InstanceOf(object, base)
     local proto = object[key_constructor][key_proto]
     assert(proto ~= nil)
@@ -99,18 +109,37 @@ function M.InstanceOf(object, base)
     return false
 end
 
+---@return Class
+---@param base Class
 function M.Mixins(base, ...)
     assert(type(base[key_proto]) == 'table')
     if ... == nil then return end
 
-    local proto = { ... }
-    for _, b in ipairs(base[key_proto]) do
+    local mixins = { ... }
+    local proto = {}
+    for _, b in ipairs(mixins) do
         assert(type(b) == 'table')
-        proto[#proto + 1] = b
+        if indexof(proto, b) == 0 then
+            proto[#proto + 1] = b
+        end
+
+        if b[key_proto] ~= nil then
+            for _, bb in ipairs(b[key_proto]) do
+                if indexof(proto, b) == 0 then
+                    proto[#proto + 1] = bb
+                end
+            end
+        end
     end
+
+    for _, b in ipairs(base[key_proto]) do
+        if indexof(proto, b) == 0 then
+            proto[#proto + 1] = b
+        end
+    end
+
     base[key_proto] = proto
 end
-
 
 return M
 

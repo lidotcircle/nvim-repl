@@ -1,6 +1,6 @@
 package.path = package.path .. ";./lua/?.lua;./third_party/luaunit/?.lua"
 
-local cls = require('class')
+local cls = require('uuclass')
 local lu  = require('luaunit')
 
 function TestBasic()
