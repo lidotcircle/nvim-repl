@@ -1,9 +1,10 @@
-package.path = package.path .. ';./lua/?.lua';
+package.path = package.path .. ';./lua/?.lua'; --TODO DEV
 
-local buffer = require('nvimRepl.output_buffer')
+local Execution = require('nvimRepl.execution_session')
 
----@type OutputBuffer
-local buf = buffer.new("lua")
-
-buf:stdout("hello world")
+---@type ExecutionSession
+local session = Execution.new("lua", nil, nil)
+session:send("print(\"hello\")\n m = 0")
+session:send("prin(\"hello\")\n m = 0")
+session:close()
 

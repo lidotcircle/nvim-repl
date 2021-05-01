@@ -11,11 +11,7 @@ local function getBufferByName(bufname)
 end
 
 local function isValidBuffer(buf)
-    local bufs = vim.api.nvim_list_bufs()
-    for _, b in ipairs(bufs) do
-        if buf == b then return true end
-    end
-    return false
+    return vim.api.nvim_buf_is_valid(buf)
 end
 
 local bufmap = {}
@@ -37,6 +33,24 @@ function OutputBuffer:init(ftype)
     self.filetype = ftype
 end
 
+function OutputBuffer:_syntax()
+    vim.api.nvim_buf_call(self.buf, function()
+        local cmd = "syntax include @Syntax syntax/"..self.filetype..".vim"
+        vim.api.nvim_command(cmd)
+
+        cmd = "syntax region ReplRegion start=+"..self:_start_tag().."+ keepend end=+"..self:_end_tag().."+  contains=@Syntax"
+        vim.api.nvim_command(cmd)
+
+        vim.api.nvim_command("syntax match Special +^*>+ ")
+        vim.api.nvim_command("syntax match ErrorMsg +^-> .*$+")
+        vim.api.nvim_command("syntax match Error +-> + containedin=ErrorMsg contained")
+
+        vim.api.nvim_command("syntax match Comment /++++.*++++/")
+        vim.api.nvim_command("syntax match Comment +"..self:_start_tag().."+ containedin=ReplRegion contained")
+        vim.api.nvim_command("syntax match Comment +"..self:_end_tag().."+ containedin=ReplRegion contained")
+    end)
+end
+
 function OutputBuffer:_ensure_buffer()
     self.buf = bufmap[self.filetype]
     if not isValidBuffer(self.buf) then
@@ -49,6 +63,8 @@ function OutputBuffer:_ensure_buffer()
         if self.buf == nil then
             self.buf = vim.api.nvim_create_buf(true, true)
             vim.api.nvim_buf_set_name(self.buf, bufname)
+            vim.api.nvim_buf_set_lines(self.buf, 0, 2, false, {"++++ REPL " .. os.date() .. " ++++", ""})
+            self:_syntax()
         end
         bufmap[self.filetype] = self.buf
     end
@@ -88,12 +104,86 @@ function OutputBuffer:_append_output(lines)
     vim.api.nvim_win_set_cursor(self.win, { l0 + #lines, 1})
 end
 
+function OutputBuffer:_start_tag()
+    return "<"..self.filetype..">"
+end
+
+function OutputBuffer:_end_tag()
+    return "</"..self.filetype..">"
+end
+
+function OutputBuffer:code(text)
+    self:_attach_current_tab()
+
+    if not text then return end
+    local lines = vim.split(text, '\n', true)
+    local cur_len = vim.api.nvim_buf_line_count(self.buf)
+    local last_lines = vim.api.nvim_buf_get_lines(self.buf, math.max(cur_len-3, 0), cur_len, true)
+
+    local function trim(_text)
+        local ans = string.gsub(string.gsub(_text, "^%s+", ""), "%s+$", "")
+        return ans
+    end
+    local function join(_lines)
+        local ans = ''
+        for _, line in ipairs(_lines) do
+            ans = ans .. line
+        end
+
+        return ans
+    end
+
+    if last_lines and trim(join(last_lines)) == self:_end_tag() then
+        local match = 0
+        for idx, line in ipairs(last_lines) do
+            if trim(line) == self:_end_tag() then
+                match = idx
+                break
+            end
+        end
+
+        if match > 0 then
+            cur_len = cur_len - (#last_lines - match + 1)
+        end
+    else
+        table.insert(lines, 1, self:_start_tag())
+    end
+    table.insert(lines, self:_end_tag())
+
+    vim.api.nvim_buf_set_lines(self.buf, cur_len, cur_len + #lines, false, lines)
+    -- FIXME
+    local n = vim.api.nvim_buf_line_count(self.buf)
+    vim.api.nvim_buf_set_lines(self.buf, cur_len + #lines, n, false, {})
+end
+
 function OutputBuffer:stdout(text)
-    self:_append_output(text)
+    self:_attach_current_tab()
+
+    local lines = vim.split(text or "", '\n', true)
+
+    for idx, line in ipairs(lines) do
+        line = "*> " .. line
+        lines[idx] = line
+    end
+
+    local line_count = vim.api.nvim_buf_line_count(self.buf)
+    vim.api.nvim_buf_set_lines(self.buf, line_count, line_count, true, lines)
+    vim.api.nvim_win_set_cursor(self.win, { line_count + #lines, 1})
 end
 
 function OutputBuffer:stderr(text)
-    self:_append_output(text)
+    self:_attach_current_tab()
+
+    local lines = vim.split(text or "", '\n', true)
+
+    for idx, line in ipairs(lines) do
+        line = "-> " .. line
+        lines[idx] = line
+    end
+
+    local line_count = vim.api.nvim_buf_line_count(self.buf)
+    vim.api.nvim_buf_set_lines(self.buf, line_count, line_count, true, lines)
+    vim.api.nvim_win_set_cursor(self.win, { line_count + #lines, 1})
 end
 
 function OutputBuffer:closeWin()
