@@ -51,7 +51,7 @@ local function exec(codes)
 
     ---@type ExecutionSession
     local session = sessions[buffer]
-    if session and not session.isValid() then
+    if session and not session:isValid() then
         sessions[buffer] = nil
         session = nil
     end
@@ -60,13 +60,18 @@ local function exec(codes)
         local config = vim.deepcopy(globalConfig)
         local cmdpath = nil
         local internal = false
-        if vim.api.nvim_exec("echo exists('b:cmdpath')") == 0 then
+        if vim.api.nvim_exec("echo exists('b:cmdpath')", true) == '1' then
             cmdpath = vim.api.nvim_buf_get_var(0, "cmdpath")
         end
-        if vim.api.nvim_exec("echo exists('b:internal')") == 0 then
+        if vim.api.nvim_exec("echo exists('b:internal')", true) == '1' then
             internal = vim.api.nvim_buf_get_var(0, "internal") ~= 0
             config[filetype] = config[filetype] or {}
             config[filetype].internal = internal
+        end
+
+        if filetype == 'vim' then
+            config.vim = config.vim or {}
+            config.vim.internal = true
         end
 
         session = Execution.new(filetype, cmdpath, config)
