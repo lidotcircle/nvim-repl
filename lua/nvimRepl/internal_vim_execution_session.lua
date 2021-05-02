@@ -22,9 +22,17 @@ end
 function InternalVimExecutionSession:close()
 end
 
----@param codes string
+---@return boolean
+function ExecutionSession:isValid()
+    return true
+end
+
+---@param codes string | string[]
 function InternalVimExecutionSession:send(codes)
     self.buffer:code(codes)
+    if type(codes) == 'table' then
+        codes = table.concat(codes, '\n')
+    end
 
     local lua_wrap = coroutine.create(function ()
         return vim.api.nvim_exec(codes, true)

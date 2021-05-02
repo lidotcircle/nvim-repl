@@ -37,7 +37,12 @@ function MixedExecutionSession:close()
     self.proxyObj:close()
 end
 
----@param codes string[]
+---@return boolean
+function MixedExecutionSession:isValid()
+    return self.proxyObj:isValid()
+end
+
+---@param codes string | string[]
 function MixedExecutionSession:send(codes)
     self.proxyObj:send(codes)
 end

@@ -27,7 +27,12 @@ function ExecutionSession:close()
     assert(false, "not implemented")
 end
 
----@param codes string
+---@return boolean
+function ExecutionSession:isValid()
+    assert(false, "not implemented")
+end
+
+---@param codes string | string[]
 function ExecutionSession:send(codes)
     assert(false, "not implemented")
 end

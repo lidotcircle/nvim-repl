@@ -112,11 +112,15 @@ function OutputBuffer:_end_tag()
     return "</"..self.filetype..">"
 end
 
+---@param text string | string[]
 function OutputBuffer:code(text)
     self:_attach_current_tab()
 
     if not text then return end
-    local lines = vim.split(text, '\n', true)
+    local lines = text
+    if type(text) == 'string' then
+        lines = vim.split(text, '\n', true)
+    end
     local cur_len = vim.api.nvim_buf_line_count(self.buf)
     local last_lines = vim.api.nvim_buf_get_lines(self.buf, math.max(cur_len-3, 0), cur_len, true)
 

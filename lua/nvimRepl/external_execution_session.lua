@@ -94,13 +94,20 @@ function ExternalExecutionSession:_close()
     self.handle = nil
 end
 
+function ExternalExecutionSession:isValid()
+    return not self.closed
+end
+
 function ExternalExecutionSession:close()
     self:_close()
 end
 
----@param codes string
+---@param codes string | string[]
 function ExternalExecutionSession:send(codes)
     self.buffer:code(codes)
+    if type(codes) == 'table' then
+        codes = table.concat(codes, '\n')
+    end
     vim.loop.write(self.stdin, codes)
 end
 

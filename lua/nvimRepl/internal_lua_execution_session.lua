@@ -20,9 +20,18 @@ end
 function InternalLuaExecutionSession:close()
 end
 
----@param codes string
+---@return boolean
+function ExecutionSession:isValid()
+    return true
+end
+
+---@param codes string | string[]
 function InternalLuaExecutionSession:send(codes)
     self.buffer:code(codes)
+    if type(codes) == 'table' then
+        codes = table.concat(codes, '\n')
+    end
+
     local chunk, err = load(codes)
     if err or not chunk then
         self.buffer:stderr("compilation failure\n".. err)
