@@ -9,25 +9,23 @@ local InternalLuaExecutionSession = require('nvimRepl.internal_lua_execution_ses
 local MixedExecutionSession = cls.Extend()
 
 ---@param ftype string filetype
----@param cmdpath string interpreter path
 ---@param config table configuration
 ---@return ExecutionSession
-function MixedExecutionSession.new(ftype, cmdpath, config)
+function MixedExecutionSession.new(ftype, config)
     ---@type MixedExecutionSession
     local obj = {}
-    config = config or {}
     MixedExecutionSession.construct(obj)
 
-    if config[ftype] and config[ftype].internal then
+    if config.internal then
         if ftype == 'vim' then
-            obj.proxyObj = InternalVimExecutionSession.new(ftype, cmdpath, config)
+            obj.proxyObj = InternalVimExecutionSession.new(ftype, config)
         elseif ftype == 'lua' then
-            obj.proxyObj = InternalLuaExecutionSession.new(ftype, cmdpath, config)
+            obj.proxyObj = InternalLuaExecutionSession.new(ftype, config)
         else
             assert(false, "bad configuraion")
         end
     else
-        obj.proxyObj = ExternalExecutionSession.new(ftype, cmdpath, config)
+        obj.proxyObj = ExternalExecutionSession.new(ftype, config)
     end
 
     return obj

@@ -19,32 +19,23 @@ end
 
 ---@class ExternalExecutionSession: ExecutionSession
 ---@field private buffer OutputBuffer
----@field private cmdpath string
 ---@field private config table
+---@field private filetype string
 ---@field private stdin any
 ---@field private handle any
 ---@field private closed boolean
 local ExternalExecutionSession = cls.Extend(ExecutionSession)
 
 ---@param ftype string filetype
----@param cmdpath string interpreter path
 ---@param config table configuration
 ---@return ExternalExecutionSession
-function ExternalExecutionSession.new(ftype, cmdpath, config)
+function ExternalExecutionSession.new(ftype, config)
     local obj = {}
     ExternalExecutionSession.construct(obj)
-    obj.buffer = buffer.new(ftype)
-    obj.config = config or {}
-    obj.cmdpath = cmdpath
-
-    if obj.cmdpath == nil then
-        if obj.config[ftype] and obj.config[ftype].cmdpath then
-            obj.cmdpath = obj.config[ftype].cmdpath
-        else
-            obj.cmdpath = which(ftype)
-        end
-    end
-    assert(obj.cmdpath ~= nil)
+    obj.buffer = buffer.new(ftype, config)
+    obj.filetype = ftype
+    obj.config = config
+    obj.config.cmdpath = obj.config.cmdpath or which(ftype)
 
     obj:_start()
     return obj
@@ -57,16 +48,17 @@ function ExternalExecutionSession:_start()
     local stderr = uv.new_pipe(true)
     self.stdin = stdin
 
-    local handle, _ = uv.spawn(self.cmdpath, {
-        stdio = {stdin, stdout, stderr}
+    local handle, _ = uv.spawn(self.config.cmdpath, {
+        stdio = {stdin, stdout, stderr};
+        args = self.config.args or { "-i" };
     }, vim.schedule_wrap(function(code, signal)
         -- TODO
-        print(self.cmdpath .. " exit code: " .. code .. ", signal: " .. signal)
+        print(self.config.cmdpath .. " exit code: " .. code .. ", signal: " .. signal)
     end))
     self.handle = handle
 
     uv.read_start(stdout, vim.schedule_wrap(function(err, data)
-        assert(not err, err)
+        print(err, data)
         if data then
             self.buffer:stdout(data)
         else
@@ -75,7 +67,7 @@ function ExternalExecutionSession:_start()
     end))
 
     uv.read_start(stderr, vim.schedule_wrap(function(err, data)
-        assert(not err, err)
+        print(err, data)
         if data then
             self.buffer:stderr(data)
         else

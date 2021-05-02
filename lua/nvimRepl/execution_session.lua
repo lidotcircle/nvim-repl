@@ -7,16 +7,16 @@ local ExecutionSession = cls.Extend()
    config: {
      [filetype]: {
        cmdpath?: string,
-       internal?: boolean  // lua and vim
+       args?: {}  // lua and vim
+       internal?: boolean  // lua
      }
    }
 --]]
 
 ---@param ftype string filetype
----@param cmdpath string interpreter path
 ---@param config table configuration
 ---@return ExecutionSession
-function ExecutionSession.new(ftype, cmdpath, config)
+function ExecutionSession.new(ftype, config)
     local obj = {}
     ExecutionSession.construct(obj)
     assert(false, "not implemented")

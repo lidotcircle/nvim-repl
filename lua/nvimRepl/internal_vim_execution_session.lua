@@ -6,16 +6,14 @@ local ExecutionSession = require('nvimRepl.execution_session')
 ---@field private buffer OutputBuffer
 local InternalVimExecutionSession = cls.Extend(ExecutionSession)
 
----@param ftype string filetype
----@param cmdpath string interpreter path
 ---@param config table configuration
 ---@return ExecutionSession
-function InternalVimExecutionSession.new(ftype, cmdpath, config)
+function InternalVimExecutionSession.new(ftype, config)
     assert(ftype == 'vim')
-    assert(config and config.vim and config.vim.internal)
+    assert(config and config.internal)
     local obj = {}
     InternalVimExecutionSession.construct(obj)
-    obj.buffer = buffer.new(ftype)
+    obj.buffer = buffer.new(ftype, config)
     return obj
 end
 

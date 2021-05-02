@@ -6,14 +6,12 @@ local ExecutionSession = require('nvimRepl.execution_session')
 ---@field private buffer OutputBuffer
 local InternalLuaExecutionSession = cls.Extend(ExecutionSession)
 
----@param ftype string filetype
----@param cmdpath string interpreter path
 ---@param config table configuration
 ---@return ExecutionSession
-function InternalLuaExecutionSession.new(ftype, cmdpath, config)
+function InternalLuaExecutionSession.new(ftype, config)
     local obj = {}
     InternalLuaExecutionSession.construct(obj)
-    obj.buffer = buffer.new(ftype)
+    obj.buffer = buffer.new(ftype, config)
     return obj
 end
 

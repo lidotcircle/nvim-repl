@@ -25,12 +25,15 @@
 -- and javascript will map to node
 require('nvimRelp').setup({
     lua = {
-        cmdpath: 'full path to lua interpreter'
+        cmdpath: 'full path to lua interpreter';
         -- only valid for lua to choose between neovim's embeded lua and external command line
-        internal: boolean
-        args: { }
-    }
-    vim = {}  -- this will not produce any effect
+        internal: boolean;
+        -- if this option is none, it value pass to spawn will be { "-i" }
+        args: { };
+        stdoutSanitizer: function(out: string): string;
+        stderrSanitizer: function(out: string): string;
+    };
+    vim = {};  -- this will not produce any effect
 
     -- javascript, python, ...
 })
