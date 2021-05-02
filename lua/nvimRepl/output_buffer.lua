@@ -120,6 +120,8 @@ function OutputBuffer:code(text)
     local lines = text
     if type(text) == 'string' then
         lines = vim.split(text, '\n', true)
+    else
+        lines = vim.deepcopy(text)
     end
     local cur_len = vim.api.nvim_buf_line_count(self.buf)
     local last_lines = vim.api.nvim_buf_get_lines(self.buf, math.max(cur_len-3, 0), cur_len, true)
