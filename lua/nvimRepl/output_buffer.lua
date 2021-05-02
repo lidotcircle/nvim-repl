@@ -46,7 +46,7 @@ function OutputBuffer:_syntax()
         vim.api.nvim_command("syntax match Error +-> + containedin=ErrorMsg contained")
 
         vim.api.nvim_command("syntax match Comment /++++.*++++/")
-        vim.api.nvim_command("syntax match Comment +"..self:_start_tag().."+ containedin=ReplRegion contained")
+        vim.api.nvim_command("syntax match Comment +"..self:_start_tag()..".*$+ containedin=ReplRegion contained")
         vim.api.nvim_command("syntax match Comment +"..self:_end_tag().."+ containedin=ReplRegion contained")
     end)
 end
@@ -146,7 +146,8 @@ function OutputBuffer:code(text)
             cur_len = cur_len - (#last_lines - match + 1)
         end
     else
-        table.insert(lines, 1, self:_start_tag())
+        table.insert(lines, 1, "")
+        table.insert(lines, 2, self:_start_tag() .. "  " .. os.date())
     end
     table.insert(lines, self:_end_tag())
 
