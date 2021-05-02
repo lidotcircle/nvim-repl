@@ -98,7 +98,7 @@ function ExternalExecutionSession:close()
     self:_close()
 end
 
----@param codes string[]
+---@param codes string
 function ExternalExecutionSession:send(codes)
     self.buffer:code(codes)
     vim.loop.write(self.stdin, codes)
