@@ -1,12 +1,15 @@
-local cls = require('uuclass')
-local buffer = require('nvimRepl.output_buffer')
+local Cls = require('uuclass')
+local Buffer = require('nvimRepl.output_buffer')
+local Prompt = require('nvimRepl.prompt')
 
 ---@class ExecutionSession: Object
 ---@field protected buffer OutputBuffer
-local ExecutionSession = cls.Extend()
+---@field protected prompt Prompt
+local ExecutionSession = Cls.Extend()
 
 function ExecutionSession.init(self, ftype, config)
-    self.buffer = buffer.new(ftype, config)
+    self.buffer = Buffer.new(ftype, config)
+    self.prompt = Prompt.new(self, config.prompt or {})
 end
 
 --[[
@@ -57,6 +60,9 @@ function ExecutionSession:bufferClear()
 end
 function ExecutionSession:bufferClose()
     self.buffer:bufferClose()
+end
+function ExecutionSession:show()
+    self.prompt:show()
 end
 
 return ExecutionSession

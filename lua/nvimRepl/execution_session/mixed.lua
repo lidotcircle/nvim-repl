@@ -1,9 +1,9 @@
 local cls = require('uuclass')
 local utils = require('nvimRepl.utils')
 ---@type ExternalExecutionSession
-local ExternalExecutionSession = require('nvimRepl.external_execution_session')
-local InternalVimExecutionSession = require('nvimRepl.internal_vim_execution_session')
-local InternalLuaExecutionSession = require('nvimRepl.internal_lua_execution_session')
+local ExternalExecutionSession = require('nvimRepl.execution_session.external')
+local InternalVimExecutionSession = require('nvimRepl.execution_session.internal_vim')
+local InternalLuaExecutionSession = require('nvimRepl.execution_session.internal_lua')
 
 ---@class MixedExecutionSession: ExecutionSession
 local MixedExecutionSession = cls.Extend()

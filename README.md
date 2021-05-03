@@ -6,8 +6,9 @@
 
 ### Features
 
-* REPL Environment for external interpreter (python, lua, node ...)
-* Support lua and vimscript embeded in neovim
+- [X] REPL Environment for external interpreter (python, lua, node ...), still require extra code to clean prompt output from interpreter
+- [X] Support lua and vimscript embeded in neovim
+- [X] support prompt interactive input
 
 ### Binding
 
@@ -22,6 +23,7 @@
 | `<Plug>(nvim-repl-win-toggle)`    | toggle REPL window |
 | `<Plug>(nvim-repl-buffer-clear)`    | clear buffer |
 | `<Plug>(nvim-repl-buffer-close)`    | close buffer (also close window) |
+| `<Plug>(nvim-repl-toggle-internal-external-mode)`    | toggle between internal and external mode (only for lua) |
 
 ### Settings
 
@@ -36,6 +38,7 @@ require('nvimRelp').setup({
         internal: boolean;
         -- if this option is none, it value pass to spawn will be { "-i" }
         args: { };
+        env:  { "key=value" };
         stdoutSanitizer: function(out: string): string;
         stderrSanitizer: function(out: string): string;
     };
@@ -47,7 +50,5 @@ require('nvimRelp').setup({
 
 ### TODO
 
-- [ ] improve code quality
-- [ ] support interactive input
 - [ ] spawn interpreter process with tty ?
 

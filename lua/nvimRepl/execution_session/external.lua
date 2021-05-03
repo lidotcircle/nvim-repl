@@ -49,7 +49,8 @@ function ExternalExecutionSession:_start() --<
 
     local handle,pid =  uv.spawn(self.config.cmdpath, {
         stdio = {stdin, stdout, stderr};
-        args = self.config.args or { "-i" };
+        args  = self.config.args or { "-i" };
+        env   = self.config.env;
     }, vim.schedule_wrap(function(code, _)
         self.buffer:hint(string.format("(%s) process %d exit with %d", self.filetype, self.pid, code), code ~= 0)
     end))

@@ -1,4 +1,4 @@
-local Execution = require('nvimRepl.mixed_execution_session')
+local Execution = require('nvimRepl.execution_session.mixed')
 local Sanitizer = require('nvimRepl.sanitizer')
 
 local M = {}
@@ -175,6 +175,27 @@ end -->
 function M.execCurrentLine() --<
     local line = vim.api.nvim_get_current_line()
     exec(line)
+end -->
+
+function M.toggleInternalExternal() --<
+    local filetype = getFiletype()
+    if filetype ~= 'lua' then return end
+
+    local internal = false
+    if vim.api.nvim_exec("echo exists('b:internal')", true) == '1' then
+        internal = vim.api.nvim_buf_get_var(0, "internal") ~= 0
+    end
+    internal = not internal
+
+    M.cleanCurrentSession()
+    vim.api.nvim_buf_set_var(0, "internal", internal and 1 or 0)
+    print(string.format("REPL switch to %s mode", internal and "internal" or "external"))
+end -->
+
+function M.showPrompt() --<
+    local session = ensureCurrentExecutionSession()
+    session:winOpen()
+    session:show()
 end -->
 
 ---@return string[]
