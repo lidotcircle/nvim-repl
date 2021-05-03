@@ -9,7 +9,7 @@ local filetype2cmdMapping = {
 ---@param cmd string
 ---@return string | nil
 local function which(cmd) --<
-    if filetype2cmdMapping[cmd] then cmd = filetype2cmdMapping end
+    if filetype2cmdMapping[cmd] then cmd = filetype2cmdMapping[cmd] end
     local proc = io.popen("which " .. cmd)
     local ans = vim.split(proc:read("*a") or "", "\n")[1]
     if #ans == 0 then ans = nil end
@@ -34,7 +34,7 @@ function ExternalExecutionSession.new(ftype, config) --<
     ExecutionSession.init(obj, ftype, config)
     obj.filetype = ftype
     obj.config = config
-    obj.config.cmdpath = obj.config.cmdpath or which(ftype)
+    obj.config.cmdpath = obj.config.cmdpath or which(obj.config.cmd or ftype)
 
     if not obj.config.lazy then obj:_start() end
     return obj

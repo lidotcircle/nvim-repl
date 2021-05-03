@@ -13,6 +13,18 @@ local globalConfig = {
         stdoutSanitizer = Sanitizer.lua_stdout;
         stderrSanitizer = Sanitizer.lua_stderr;
     };
+    sh = {
+        cmd = 'bash';
+        args = { };
+    };
+    python = {
+        stdoutSanitizer = Sanitizer.python_stdout;
+        stderrSanitizer = Sanitizer.python_stderr;
+    };
+    javascript = {
+        stdoutSanitizer = Sanitizer.node_stdout;
+        stderrSanitizer = Sanitizer.node_stderr;
+    };
 }
 
 local function softAssign(target, source) --<
