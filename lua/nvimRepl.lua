@@ -1,4 +1,5 @@
 local Execution = require('nvimRepl.mixed_execution_session')
+local Sanitizer = require('nvimRepl.sanitizer')
 
 local M = {}
 
@@ -8,8 +9,8 @@ local globalConfig = {
         internal = true;
     };
     lua = {
-        stdoutSanitizer = nil;
-        stderrSanitizer = nil;
+        stdoutSanitizer = Sanitizer.lua_stdout;
+        stderrSanitizer = Sanitizer.lua_stderr;
     };
 }
 
@@ -121,18 +122,18 @@ function M.cleanCurrentSession() --<
 end -->
 
 function M.winClose() --<
-    local session = getCurrentExecutionSession()
-    if session then session:winClose() end
+    local session = ensureCurrentExecutionSession()
+    session:winClose()
 end -->
 
 function M.winOpen() --<
     local session = ensureCurrentExecutionSession()
-    if session then session:winOpen() end
+    session:winOpen()
 end -->
 
 function M.winToggle() --<
     local session = ensureCurrentExecutionSession()
-    if session then session:winToggle() end
+    session:winToggle()
 end -->
 
 function M.bufferClear() --<

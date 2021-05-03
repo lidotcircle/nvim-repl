@@ -8,13 +8,13 @@ local filetype2cmdMapping = {
 
 ---@param cmd string
 ---@return string | nil
-local function which(cmd)
+local function which(cmd) --<
     if filetype2cmdMapping[cmd] then cmd = filetype2cmdMapping end
     local proc = io.popen("which " .. cmd)
     local ans = vim.split(proc:read("*a") or "", "\n")[1]
     if #ans == 0 then ans = nil end
     return ans
-end
+end -->
 
 ---@class ExternalExecutionSession: ExecutionSession
 ---@field private config table
@@ -28,7 +28,7 @@ local ExternalExecutionSession = cls.Extend(ExecutionSession)
 ---@param ftype string filetype
 ---@param config table configuration
 ---@return ExternalExecutionSession
-function ExternalExecutionSession.new(ftype, config)
+function ExternalExecutionSession.new(ftype, config) --<
     local obj = {}
     ExternalExecutionSession.construct(obj)
     ExecutionSession.init(obj, ftype, config)
@@ -36,11 +36,11 @@ function ExternalExecutionSession.new(ftype, config)
     obj.config = config
     obj.config.cmdpath = obj.config.cmdpath or which(ftype)
 
-    obj:_start()
+    if not obj.config.lazy then obj:_start() end
     return obj
-end
+end -->
 
-function ExternalExecutionSession:_start()
+function ExternalExecutionSession:_start() --<
     local uv = vim.loop
     local stdin = uv.new_pipe(true)
     local stdout = uv.new_pipe(true)
@@ -66,8 +66,8 @@ function ExternalExecutionSession:_start()
         if data then
             if self.config.stdoutSanitizer then
                 local sout, serr = self.config.stdoutSanitizer(data)
-                if sout then self.buffer:stdout(data) end
-                if serr then self.buffer:stderr(data) end
+                if sout then self.buffer:stdout(sout) end
+                if serr then self.buffer:stderr(serr) end
             else
                 self.buffer:stdout(data)
             end
@@ -86,8 +86,8 @@ function ExternalExecutionSession:_start()
         if data then
             if self.config.stderrSanitizer then
                 local sout, serr = self.config.stderrSanitizer(data)
-                if sout then self.buffer:stdout(data) end
-                if serr then self.buffer:stderr(data) end
+                if sout then self.buffer:stdout(sout) end
+                if serr then self.buffer:stderr(serr) end
             else
                 self.buffer:stderr(data)
             end
@@ -95,29 +95,33 @@ function ExternalExecutionSession:_start()
             self:_close()
         end
     end))
-end
+end -->
 
-function ExternalExecutionSession:_close()
+function ExternalExecutionSession:_close() --<
     if self.closed then return end
     self.closed = true
+
+    if not self.handle then return end
 
     local handle = self.handle
     vim.loop.shutdown(self.stdin, vim.schedule_wrap(function() vim.loop.close(handle) end))
     self.stdin = nil
     self.handle = nil
-end
+end -->
 
-function ExternalExecutionSession:isValid()
+function ExternalExecutionSession:isValid() --<
     return not self.closed
-end
+end -->
 
-function ExternalExecutionSession:close()
+function ExternalExecutionSession:close() --<
     self:_close()
-end
+end -->
 
 ---@param codes string | string[]
-function ExternalExecutionSession:send(codes)
+function ExternalExecutionSession:send(codes) --<
     self.buffer:code(codes)
+    if not self.handle then self:_start() end
+
     if type(codes) == type({}) then
         codes = table.concat(codes, '\n')
     end
@@ -128,7 +132,7 @@ function ExternalExecutionSession:send(codes)
         codes = codes .. '\n'
     end
     vim.loop.write(self.stdin, codes)
-end
+end -->
 
 return ExternalExecutionSession
 

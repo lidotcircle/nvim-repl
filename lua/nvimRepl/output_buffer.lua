@@ -1,6 +1,23 @@
 local cls = require('uuclass')
 
-local function getBufferByName(bufname)
+local SpecialStrs = {
+    startTag = function(filetype) return '``` ' .. filetype end;
+    endTag   = function(_) return '```' end;
+
+    stderrPrefix = "-> ";
+    stdoutPrefix = "*> ";
+
+    errPromptPrefix = "--> ";
+    outPromptPrefix = "==> ";
+
+    datePrefix  = "<< ";
+    datePostfix = " >>";
+
+    tiltePrefix  = "++++   ";
+    tiltePostfix = "    ++++";
+}
+
+local function getBufferByName(bufname) --<
     local bufs = vim.api.nvim_list_bufs()
     for _, buf in ipairs(bufs) do
         if vim.api.nvim_buf_get_name(buf) == bufname then
@@ -8,7 +25,7 @@ local function getBufferByName(bufname)
         end
     end
     return nil
-end
+end -->
 
 local bufmap = {}
 
@@ -36,19 +53,29 @@ end -->
 
 function OutputBuffer:_syntax() --<
     vim.api.nvim_buf_call(self.buf, function()
-        local cmd = "syntax include @Syntax syntax/"..self.filetype..".vim"
-        vim.api.nvim_command(cmd)
+        -- CODE BLOCK
+        vim.api.nvim_command(string.format("syntax include @Syntax syntax/%s.vim", self.filetype))
+        vim.api.nvim_command(string.format("syntax region ReplRegion start=/%s/ keepend end=/%s/ contains=@Syntax", self:_start_tag(), self:_end_tag()))
 
-        cmd = "syntax region ReplRegion start=+"..self:_start_tag().."+ keepend end=+"..self:_end_tag().."+  contains=@Syntax"
-        vim.api.nvim_command(cmd)
+        -- stdout, stderr
+        vim.api.nvim_command(string.format("syntax match Special /^%s/ ", SpecialStrs.stdoutPrefix))
+        vim.api.nvim_command(string.format("syntax match ErrorMsg /^%s.*$/", SpecialStrs.stderrPrefix))
+        vim.api.nvim_command(string.format("syntax match Error /%s/ containedin=ErrorMsg contained", SpecialStrs.stderrPrefix))
 
-        vim.api.nvim_command("syntax match Special +^*>+ ")
-        vim.api.nvim_command("syntax match ErrorMsg +^-> .*$+")
-        vim.api.nvim_command("syntax match Error +-> + containedin=ErrorMsg contained")
+        -- prompt
+        vim.api.nvim_command(string.format("syntax match TODO /^%s.*$/ ", SpecialStrs.outPromptPrefix))
+        vim.api.nvim_command(string.format("syntax match Debug /^%s.*$/", SpecialStrs.errPromptPrefix))
+        vim.api.nvim_command(string.format("syntax match Error /%s/ containedin=ErrorMsg contained", SpecialStrs.errPromptPrefix))
 
-        vim.api.nvim_command("syntax match Comment /++++.*++++/")
-        vim.api.nvim_command("syntax match Comment +"..self:_start_tag()..".*$+ containedin=ReplRegion contained")
-        vim.api.nvim_command("syntax match Comment +"..self:_end_tag().."+ containedin=ReplRegion contained")
+        -- DATE
+        vim.api.nvim_command(string.format("syntax match Underlined /%s.*%s/", SpecialStrs.datePrefix, SpecialStrs.datePostfix))
+
+        -- TITLE
+        vim.api.nvim_command(string.format("syntax match Constant /%s.*%s/", SpecialStrs.tiltePrefix, SpecialStrs.tiltePostfix))
+
+        -- TAG
+        vim.api.nvim_command(string.format("syntax match Identifier /%s.*$/ containedin=ReplRegion contained", self:_start_tag()))
+        vim.api.nvim_command(string.format("syntax match Identifier /%s/ containedin=ReplRegion contained", self:_end_tag()))
     end)
 end -->
 
@@ -64,30 +91,41 @@ function OutputBuffer:_ensure_buffer() --<
         if self.buf == nil then
             self.buf = vim.api.nvim_create_buf(true, true)
             vim.api.nvim_buf_set_name(self.buf, bufname)
-            vim.api.nvim_buf_set_lines(self.buf, 0, 2, false, {"++++ REPL " .. os.date() .. " ++++", ""})
+            vim.api.nvim_buf_set_lines(self.buf, 0, 2, false, {
+                string.format("%s REPL %s %s", SpecialStrs.tiltePrefix, os.date(), SpecialStrs.tiltePostfix);
+                "";
+            })
             self:_syntax()
         end
         bufmap[self.filetype] = self.buf
     end
 end -->
 
-function OutputBuffer:_ensure_win() --<
-    assert(vim.api.nvim_buf_is_valid(self.buf))
+---@return number
+function OutputBuffer:_getValidWinInTabpage() --<
+    self:_ensure_buffer()
 
     local wins = vim.api.nvim_tabpage_list_wins(0)
     for _, win in ipairs(wins) do
         local buf = vim.api.nvim_win_get_buf(win)
         if buf == self.buf then
-            self.win = win
-            return
+            return win
         end
     end
 
-    local current_win = vim.api.nvim_get_current_win()
-    vim.api.nvim_command("new")
-    self.win = vim.api.nvim_get_current_win()
-    vim.api.nvim_set_current_win(current_win)
-    vim.api.nvim_win_set_buf(self.win, self.buf)
+    return nil
+end -->
+
+function OutputBuffer:_ensure_win() --<
+    self.win = self:_getValidWinInTabpage()
+
+    if not self.win then
+        local current_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_command("new")
+        self.win = vim.api.nvim_get_current_win()
+        vim.api.nvim_set_current_win(current_win)
+        vim.api.nvim_win_set_buf(self.win, self.buf)
+    end
 end -->
 
 function OutputBuffer:_attach_current_tab() --<
@@ -106,11 +144,11 @@ function OutputBuffer:_append_output(lines, setcursor) --<
 end -->
 
 function OutputBuffer:_start_tag() --<
-    return "<"..self.filetype..">"
+    return SpecialStrs.startTag(self.filetype)
 end -->
 
 function OutputBuffer:_end_tag() --<
-    return "</"..self.filetype..">"
+    return SpecialStrs.endTag(self.filetype)
 end -->
 
 ---@param text string | string[]
@@ -134,10 +172,12 @@ function OutputBuffer:code(text) --<
 
 
     local match = 0
-    for idx, line in ipairs(last_lines) do
-        if trim(line) == self:_end_tag() then
-            match = idx
-            break
+    if trim(table.concat(last_lines, '')) == self:_end_tag() then
+        for idx, line in ipairs(last_lines) do
+            if trim(line) == self:_end_tag() then
+                match = idx
+                break
+            end
         end
     end
 
@@ -146,8 +186,8 @@ function OutputBuffer:code(text) --<
         vim.api.nvim_buf_set_lines(self.buf, nlen, cur_len, true, {})
         cur_len = nlen
     else
-        table.insert(lines, 1, "")
-        table.insert(lines, 2, self:_start_tag() .. "  " .. os.date())
+        table.insert(lines, 1, self:_start_tag())
+        self:_append_output({""; SpecialStrs.datePrefix .. os.date() .. SpecialStrs.datePostfix }, false)
     end
     table.insert(lines, self:_end_tag())
 
@@ -166,21 +206,22 @@ function OutputBuffer:_append_prefixed_lines(text, prefix) --<
         lines[idx] = line
     end
 
-    self:_append_output(lines)
+    self:_append_output(lines, true)
 end -->
 
 ---@param text string
-function OutputBuffer:stdout(text) self:_append_prefixed_lines(text, "*> ") end
+function OutputBuffer:stdout(text) self:_append_prefixed_lines(text, SpecialStrs.stdoutPrefix) end
 
 ---@param text string
-function OutputBuffer:stderr(text) self:_append_prefixed_lines(text, "-> ") end
+function OutputBuffer:stderr(text) self:_append_prefixed_lines(text, SpecialStrs.stderrPrefix) end
 
 ---@param text string
 ---@param err  boolean
-function OutputBuffer:hint(text, err) self:_append_prefixed_lines(text, err and "--> " or "==> ") end
+function OutputBuffer:hint(text, err) self:_append_prefixed_lines(text, err and SpecialStrs.errPromptPrefix or SpecialStrs.outPromptPrefix) end
 
 function OutputBuffer:winClose() --<
-    if self.win and vim.api.nvim_win_is_valid(self.win) then
+    if self:_getValidWinInTabpage() ~= nil then
+        self:_attach_current_tab()
         vim.api.nvim_win_close(self.win, true)
         self.win = nil
     end
@@ -191,7 +232,7 @@ function OutputBuffer:winOpen() --<
 end -->
 
 function OutputBuffer:winToggle() --<
-    if self.win and vim.api.nvim_win_is_valid(self.win) then
+    if self:_getValidWinInTabpage() ~= nil then
         self:winClose()
     else
         self:winOpen()

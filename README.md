@@ -16,6 +16,7 @@
 | `<Plug>(nvim-repl-current-line)` | execute current line          |
 | `<Plug>(nvim-repl-current-file)` | execute current file (buffer) |
 | `<Plug>(nvim-repl-selection)`    | execute selection zone        |
+| `<Plug>(nvim-repl-reset-interpreter)` | close active interpreter |
 | `<Plug>(nvim-repl-win-open)`      | open REPL window in current tabpage |
 | `<Plug>(nvim-repl-win-close)`     | close REPL window |
 | `<Plug>(nvim-repl-win-toggle)`    | toggle REPL window |
