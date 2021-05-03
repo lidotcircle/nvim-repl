@@ -8,7 +8,7 @@
 ### Features
 
 - [X] REPL Environment for external interpreter (python, lua, node ...), still require extra code to clean prompt output from interpreter
-- [X] currently [ lua, vim, bash ] is working properly
+- [X] currently [ lua, vim, bash, javascript, python ] is working properly
 - [X] Support lua and vimscript embeded in neovim
 - [X] support prompt interactive input
 
@@ -67,8 +67,8 @@ require('nvimRelp').setup({
         -- if this option is nil, value pass to spawn will be { "-i" }
         args: { };
         env:  { "key=value" };
-        stdoutSanitizer: function(out: string): string;
-        stderrSanitizer: function(out: string): string;
+        stdoutSanitizer: function(out: string): [string, string];
+        stderrSanitizer: function(err: string): [string, string];
     };
     vim = {};  -- this will not produce any effect
 
