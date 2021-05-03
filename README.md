@@ -24,6 +24,7 @@
 | `<Plug>(nvim-repl-buffer-clear)`    | clear buffer |
 | `<Plug>(nvim-repl-buffer-close)`    | close buffer (also close window) |
 | `<Plug>(nvim-repl-toggle-internal-external-mode)`    | toggle between internal and external mode (only for lua) |
+| `<Plug>(nvim-repl-show-prompt)`    | open interactive prompt input |
 
 ### Settings
 
