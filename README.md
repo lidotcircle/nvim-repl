@@ -16,6 +16,11 @@
 | `<Plug>(nvim-repl-current-line)` | execute current line          |
 | `<Plug>(nvim-repl-current-file)` | execute current file (buffer) |
 | `<Plug>(nvim-repl-selection)`    | execute selection zone        |
+| `<Plug>(nvim-repl-win-open)`      | open REPL window in current tabpage |
+| `<Plug>(nvim-repl-win-close)`     | close REPL window |
+| `<Plug>(nvim-repl-win-toggle)`    | toggle REPL window |
+| `<Plug>(nvim-repl-buffer-clear)`    | clear buffer |
+| `<Plug>(nvim-repl-buffer-close)`    | close buffer (also close window) |
 
 ### Settings
 
@@ -43,4 +48,5 @@ require('nvimRelp').setup({
 
 - [ ] improve code quality
 - [ ] support interactive input
+- [ ] spawn interpreter process with tty ?
 

@@ -95,16 +95,14 @@ function OutputBuffer:_attach_current_tab() --<
     self:_ensure_win()
 end -->
 
-function OutputBuffer:_append_output(lines) --<
-    self:_ensure_buffer()
-
-    if type(lines) == type('') then
-        lines = vim.split(lines or "", '\n', true)
+---@param lines string[]
+---@param setcursor boolean
+function OutputBuffer:_append_output(lines, setcursor) --<
+    local line_count = vim.api.nvim_buf_line_count(self.buf)
+    vim.api.nvim_buf_set_lines(self.buf, line_count, line_count, true, lines)
+    if setcursor and self.win and vim.api.nvim_win_is_valid(self.win) then
+        vim.api.nvim_win_set_cursor(self.win, { line_count + #lines, 1})
     end
-
-    local l0 = vim.api.nvim_buf_line_count(self.buf)
-    vim.api.nvim_buf_set_lines(self.buf, l0, l0, true, lines)
-    vim.api.nvim_win_set_cursor(self.win, { l0 + #lines, 1})
 end -->
 
 function OutputBuffer:_start_tag() --<
@@ -153,54 +151,64 @@ function OutputBuffer:code(text) --<
     end
     table.insert(lines, self:_end_tag())
 
-    vim.api.nvim_buf_set_lines(self.buf, cur_len, cur_len + #lines, false, lines)
+    self:_append_output(lines, true)
 end -->
 
-function OutputBuffer:stdout(text) --<
-    self:_attach_current_tab()
+---@param text   string
+---@param prefix string
+function OutputBuffer:_append_prefixed_lines(text, prefix) --<
+    self:_ensure_buffer()
 
     local lines = vim.split(text or "", '\n', true)
 
     for idx, line in ipairs(lines) do
-        line = "*> " .. line
+        line = prefix .. line
         lines[idx] = line
     end
 
-    local line_count = vim.api.nvim_buf_line_count(self.buf)
-    vim.api.nvim_buf_set_lines(self.buf, line_count, line_count, true, lines)
-    vim.api.nvim_win_set_cursor(self.win, { line_count + #lines, 1})
+    self:_append_output(lines)
 end -->
 
-function OutputBuffer:stderr(text) --<
-    self:_attach_current_tab()
+---@param text string
+function OutputBuffer:stdout(text) self:_append_prefixed_lines(text, "*> ") end
 
-    local lines = vim.split(text or "", '\n', true)
+---@param text string
+function OutputBuffer:stderr(text) self:_append_prefixed_lines(text, "-> ") end
 
-    for idx, line in ipairs(lines) do
-        line = "-> " .. line
-        lines[idx] = line
-    end
+---@param text string
+---@param err  boolean
+function OutputBuffer:hint(text, err) self:_append_prefixed_lines(text, err and "--> " or "==> ") end
 
-    local line_count = vim.api.nvim_buf_line_count(self.buf)
-    vim.api.nvim_buf_set_lines(self.buf, line_count, line_count, true, lines)
-    vim.api.nvim_win_set_cursor(self.win, { line_count + #lines, 1})
-end -->
-
-function OutputBuffer:closeWin() --<
+function OutputBuffer:winClose() --<
     if self.win and vim.api.nvim_win_is_valid(self.win) then
         vim.api.nvim_win_close(self.win, true)
         self.win = nil
     end
 end -->
 
-function OutputBuffer:openWin()
-end
+function OutputBuffer:winOpen() --<
+    self:_attach_current_tab()
+end -->
 
-function OutputBuffer:clearBuffer()
-end
+function OutputBuffer:winToggle() --<
+    if self.win and vim.api.nvim_win_is_valid(self.win) then
+        self:winClose()
+    else
+        self:winOpen()
+    end
+end -->
 
-function OutputBuffer:closeBuffer()
-end
+function OutputBuffer:bufferClear() --<
+    self:_ensure_buffer()
+    local len = vim.api.nvim_buf_line_count(self.buf)
+    vim.api.nvim_buf_set_lines(self.buf, 0, len, true, {})
+end -->
+
+function OutputBuffer:bufferClose() --<
+    if self.buf and vim.api.nvim_buf_is_valid(self.buf) then
+        vim.api.nvim_buf_delete(self.buf, {force = true})
+    end
+end -->
 
 return OutputBuffer
 

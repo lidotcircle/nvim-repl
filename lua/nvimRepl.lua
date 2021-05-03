@@ -54,6 +54,12 @@ local function getFiletype() --<
     return filetype
 end -->
 
+---@return ExecutionSession | nil
+local function getCurrentExecutionSession() --<
+    local buffer = getCurrentBuffer()
+    return sessions[buffer]
+end -->
+
 ---@return table
 local function iter2array(iter) --<
     local ans = {}
@@ -66,8 +72,8 @@ local function iter2array(iter) --<
     return ans
 end -->
 
----@param codes string | string[]
-local function exec(codes) --<
+---@return ExecutionSession
+local function ensureCurrentExecutionSession() --<
     local filetype = getFiletype()
     local buffer = getCurrentBuffer()
 
@@ -95,6 +101,12 @@ local function exec(codes) --<
         sessions[buffer] = session
     end
 
+    return session
+end -->
+
+---@param codes string | string[]
+local function exec(codes) --<
+    local session = ensureCurrentExecutionSession()
     session:send(codes)
 end -->
 
@@ -106,6 +118,31 @@ function M.cleanCurrentSession() --<
         if session:isValid() then session:close() end
         sessions[buffer] = nil
     end
+end -->
+
+function M.winClose() --<
+    local session = getCurrentExecutionSession()
+    if session then session:winClose() end
+end -->
+
+function M.winOpen() --<
+    local session = ensureCurrentExecutionSession()
+    if session then session:winOpen() end
+end -->
+
+function M.winToggle() --<
+    local session = ensureCurrentExecutionSession()
+    if session then session:winToggle() end
+end -->
+
+function M.bufferClear() --<
+    local session = getCurrentExecutionSession()
+    if session then session:bufferClear() end
+end -->
+
+function M.bufferClose() --<
+    local session = getCurrentExecutionSession()
+    if session then session:bufferClose() end
 end -->
 
 function M.execFile() --<

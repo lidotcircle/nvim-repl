@@ -1,9 +1,7 @@
 local cls = require('uuclass')
-local buffer = require('nvimRepl.output_buffer')
 local ExecutionSession = require('nvimRepl.execution_session')
 
----@class InternalLuaExecutionSession: Object
----@field private buffer OutputBuffer
+---@class InternalLuaExecutionSession: ExecutionSession
 local InternalLuaExecutionSession = cls.Extend(ExecutionSession)
 
 ---@param config table configuration
@@ -11,7 +9,7 @@ local InternalLuaExecutionSession = cls.Extend(ExecutionSession)
 function InternalLuaExecutionSession.new(ftype, config)
     local obj = {}
     InternalLuaExecutionSession.construct(obj)
-    obj.buffer = buffer.new(ftype, config)
+    ExecutionSession.init(obj, ftype, config)
     return obj
 end
 

@@ -1,5 +1,4 @@
 local cls = require('uuclass')
-local buffer = require('nvimRepl.output_buffer')
 local ExecutionSession = require('nvimRepl.execution_session')
 
 local filetype2cmdMapping = {
@@ -18,11 +17,11 @@ local function which(cmd)
 end
 
 ---@class ExternalExecutionSession: ExecutionSession
----@field private buffer OutputBuffer
 ---@field private config table
 ---@field private filetype string
 ---@field private stdin any
 ---@field private handle any
+---@field private pid any
 ---@field private closed boolean
 local ExternalExecutionSession = cls.Extend(ExecutionSession)
 
@@ -32,7 +31,7 @@ local ExternalExecutionSession = cls.Extend(ExecutionSession)
 function ExternalExecutionSession.new(ftype, config)
     local obj = {}
     ExternalExecutionSession.construct(obj)
-    obj.buffer = buffer.new(ftype, config)
+    ExecutionSession.init(obj, ftype, config)
     obj.filetype = ftype
     obj.config = config
     obj.config.cmdpath = obj.config.cmdpath or which(ftype)
@@ -48,28 +47,50 @@ function ExternalExecutionSession:_start()
     local stderr = uv.new_pipe(true)
     self.stdin = stdin
 
-    local handle, _ = uv.spawn(self.config.cmdpath, {
+    local handle,pid =  uv.spawn(self.config.cmdpath, {
         stdio = {stdin, stdout, stderr};
         args = self.config.args or { "-i" };
-    }, vim.schedule_wrap(function(code, signal)
-        -- TODO
-        print(self.config.cmdpath .. " exit code: " .. code .. ", signal: " .. signal)
+    }, vim.schedule_wrap(function(code, _)
+        self.buffer:hint(string.format("(%s) process %d exit with %d", self.filetype, self.pid, code), code ~= 0)
     end))
     self.handle = handle
+    self.pid = pid
 
     uv.read_start(stdout, vim.schedule_wrap(function(err, data)
-        print(err, data)
+        if err then
+            self.buffer:stderr(err)
+            self:_close()
+            return
+        end
+
         if data then
-            self.buffer:stdout(data)
+            if self.config.stdoutSanitizer then
+                local sout, serr = self.config.stdoutSanitizer(data)
+                if sout then self.buffer:stdout(data) end
+                if serr then self.buffer:stderr(data) end
+            else
+                self.buffer:stdout(data)
+            end
         else
             self:_close()
         end
     end))
 
     uv.read_start(stderr, vim.schedule_wrap(function(err, data)
-        print(err, data)
+        if err then
+            self.buffer:stderr(err)
+            self:_close()
+            return
+        end
+
         if data then
-            self.buffer:stderr(data)
+            if self.config.stderrSanitizer then
+                local sout, serr = self.config.stderrSanitizer(data)
+                if sout then self.buffer:stdout(data) end
+                if serr then self.buffer:stderr(data) end
+            else
+                self.buffer:stderr(data)
+            end
         else
             self:_close()
         end
@@ -97,8 +118,14 @@ end
 ---@param codes string | string[]
 function ExternalExecutionSession:send(codes)
     self.buffer:code(codes)
-    if type(codes) == 'table' then
+    if type(codes) == type({}) then
         codes = table.concat(codes, '\n')
+    end
+    if not string.match(codes, "^%s*\n") then
+        codes = '\n' .. codes
+    end
+    if not string.match(codes, ".*\n%s*$") then
+        codes = codes .. '\n'
     end
     vim.loop.write(self.stdin, codes)
 end

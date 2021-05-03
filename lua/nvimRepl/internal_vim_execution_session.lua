@@ -1,9 +1,7 @@
 local cls = require('uuclass')
-local buffer = require('nvimRepl.output_buffer')
 local ExecutionSession = require('nvimRepl.execution_session')
 
----@class InternalVimExecutionSession: Object
----@field private buffer OutputBuffer
+---@class InternalVimExecutionSession: ExecutionSession
 local InternalVimExecutionSession = cls.Extend(ExecutionSession)
 
 ---@param config table configuration
@@ -13,7 +11,7 @@ function InternalVimExecutionSession.new(ftype, config)
     assert(config and config.internal)
     local obj = {}
     InternalVimExecutionSession.construct(obj)
-    obj.buffer = buffer.new(ftype, config)
+    ExecutionSession.init(obj, ftype, config)
     return obj
 end
 
