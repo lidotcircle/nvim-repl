@@ -3,6 +3,7 @@ local Sanitizer = require('nvimRepl.sanitizer')
 
 local M = {}
 
+local registeredBuffers = {}
 local sessions = {}
 local globalConfig = {
     vim = {
@@ -73,6 +74,30 @@ local function iter2array(iter) --<
     return ans
 end -->
 
+local function registerBufferDelete(buffer) --<
+    if registeredBuffers[buffer] ~= nil then return end
+
+    vim.api.nvim_buf_call(buffer, function()
+        vim.api.nvim_command(string.format("autocmd BufDelete <buffer> lua require('nvimRepl').beforeBufferDeleteCallback(%d)", buffer))
+    end)
+    registeredBuffers[buffer] = true
+end -->
+
+local function cleanSessionOfBuffer(buffer) --<
+    ---@type ExecutionSession
+    local session = sessions[buffer]
+    if session then
+        if session:isValid() then session:close() end
+        sessions[buffer] = nil
+    end
+end -->
+
+function M.beforeBufferDeleteCallback(buffer) --<
+    assert(registeredBuffers[buffer] ~= nil)
+    registeredBuffers[buffer] = nil
+    cleanSessionOfBuffer(buffer)
+end -->
+
 ---@return ExecutionSession
 local function ensureCurrentExecutionSession() --<
     local filetype = getFiletype()
@@ -100,6 +125,7 @@ local function ensureCurrentExecutionSession() --<
 
         session = Execution.new(filetype, config)
         sessions[buffer] = session
+        registerBufferDelete(buffer)
     end
 
     return session
@@ -113,12 +139,7 @@ end -->
 
 function M.cleanCurrentSession() --<
     local buffer = getCurrentBuffer()
-    ---@type ExecutionSession
-    local session = sessions[buffer]
-    if session then
-        if session:isValid() then session:close() end
-        sessions[buffer] = nil
-    end
+    cleanSessionOfBuffer(buffer)
 end -->
 
 function M.winClose() --<
