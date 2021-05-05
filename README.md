@@ -3,6 +3,8 @@
 ### Requirements
 
 + neovim >= 0.5
++ [popup.nvim](https://github.com/nvim-lua/popup.nvim)
++ [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 
 
 ### Features
