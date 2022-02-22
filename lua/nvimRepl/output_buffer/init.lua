@@ -198,12 +198,17 @@ end -->
 ---@param prefix string
 function OutputBuffer:_append_prefixed_lines(text, prefix) --<
     self:_ensure_buffer()
+    local px = prefix
 
     local lines = vim.split(text or "", '\n', true)
 
     for idx, line in ipairs(lines) do
         line = prefix .. line
         lines[idx] = line
+        prefix = string.rep(' ', #prefix)
+    end
+    if lines[#lines] and string.len(lines[#lines]) > 0 then
+        lines[#lines+1] = px
     end
 
     self:_append_output(lines, true)

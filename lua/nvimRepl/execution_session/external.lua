@@ -36,6 +36,10 @@ function ExternalExecutionSession.new(ftype, config) --<
     obj.config = config
     obj.config.cmdpath = obj.config.cmdpath or which(obj.config.cmd or ftype)
 
+    if obj.config.cmdpath == nil then
+        error("can't start repl for " .. obj.filetype)
+    end
+
     if not obj.config.lazy then obj:_start() end
     return obj
 end -->
