@@ -13,4 +13,5 @@ noremap  <silent><Plug>(nvim-repl-buffer-clear) <Cmd>lua require('nvimRepl').buf
 
 noremap  <silent><Plug>(nvim-repl-toggle-internal-external-mode) <Cmd>lua require('nvimRepl').toggleInternalExternal()<cr>
 noremap  <silent><Plug>(nvim-repl-show-prompt) <Cmd>lua require('nvimRepl').showPrompt()<cr>
+noremap  <silent><Plug>(nvim-repl-show-prompt-bash) <Cmd>lua require('nvimRepl').showPromptBash()<cr>
 

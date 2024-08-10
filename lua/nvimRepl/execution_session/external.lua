@@ -57,7 +57,9 @@ function ExternalExecutionSession:_start() --<
         env   = self.config.env;
     }, vim.schedule_wrap(function(code, _)
         self.buffer:hint(string.format("(%s) process %d exit with %d", self.filetype, self.pid, code), code ~= 0)
+        self.running = false
     end))
+    self.running = true
     self.handle = handle
     self.pid = pid
 
@@ -124,6 +126,11 @@ end -->
 
 ---@param codes string | string[]
 function ExternalExecutionSession:send(codes) --<
+    if not self.running then
+        self.buffer:hint("repl is not running")
+        return
+    end
+
     self.buffer:code(codes)
     if not self.handle then self:_start() end
 

@@ -19,7 +19,7 @@ function Prompt.new(execSession, config) --<
     local obj = {}
     Prompt.construct(obj)
     obj.session = execSession
-    obj.config = config or {}
+    obj.config = config
     obj.config.promptPrefix = obj.config.promptPrefix or promptPrefix
     obj.history = {}
     obj.history_pointer = 1
@@ -128,12 +128,12 @@ function Prompt:_setup_win() --<
     vim.cmd [[startinsert!]]
 end -->
 
-function Prompt:show() --<
+function Prompt:show(title) --<
     if self.win_id then self:_exit() end
 
     local opts = {
         height  = 1,
-        title   = 'Prompt',
+        title   = self.config.title or 'Prompt',
         padding = {0, 1, 0, 1},
         border  = {1, 1, 1, 1},
     }

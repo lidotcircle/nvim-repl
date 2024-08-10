@@ -17,6 +17,10 @@ local globalConfig = {
         cmd = 'bash';
         args = { };
     };
+    bash = {
+        cmd = 'bash';
+        args = { };
+    };
     python = {
         stdoutSanitizer = Sanitizer.python_stdout;
         stderrSanitizer = Sanitizer.python_stderr;
@@ -111,8 +115,8 @@ function M.beforeBufferDeleteCallback(buffer) --<
 end -->
 
 ---@return ExecutionSession
-local function ensureCurrentExecutionSession() --<
-    local filetype = getFiletype()
+local function ensureCurrentExecutionSession(type) --<
+    local filetype = type or getFiletype()
     local buffer = getCurrentBuffer()
 
     ---@type ExecutionSession
@@ -137,6 +141,7 @@ local function ensureCurrentExecutionSession() --<
 
         session = Execution.new(filetype, config)
         sessions[buffer] = session
+        session["filetype"] = filetype
         registerBufferDelete(buffer)
     end
 
@@ -206,6 +211,12 @@ end -->
 
 function M.showPrompt() --<
     local session = ensureCurrentExecutionSession()
+    session:winOpen()
+    session:show()
+end -->
+
+function M.showPromptBash() --<
+    local session = ensureCurrentExecutionSession("bash")
     session:winOpen()
     session:show()
 end -->

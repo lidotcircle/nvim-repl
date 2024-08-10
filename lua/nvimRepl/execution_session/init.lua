@@ -9,7 +9,7 @@ local ExecutionSession = Cls.Extend()
 
 function ExecutionSession.init(self, ftype, config)
     self.buffer = Buffer.new(ftype, config)
-    self.prompt = Prompt.new(self, config.prompt or {})
+    self.prompt = Prompt.new(self, config.prompt or {title = ftype})
 end
 
 --[[
